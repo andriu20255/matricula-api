@@ -1,28 +1,32 @@
-Feature: : Matricula de cursos
-  Como alumno de CIBERTEC
-  Quiero matricularme en mis cursos
-  Para llevarlos en el ciclo
+# language: es
+@p1
+Característica: Matrícula del alumno
 
-  Scenario: Matricula valida con descuento por promedio y anulacion
-    Given  que Ana consulta la API de matricula
-    When se matricula con el codigo "i202610001" en el curso "PS3511"
-    Then el codigo de respuesta es 201
-    And el monto de la matricula es 288,0
-    And el estado de la matricula es "REGISTRADA"
-    When anula es matricula
-    Then el codigo de respuesta es 200
-    And el estado de la matricula es "ANULADA"
+  Antecedentes:
+    Dado que el alumno "i202610002" inicia sesión con la clave "Cibertec2026"
 
-  Scenario Outline: Matricula rechazada por <motivo>
-    Given  que Ana consulta la API de matricula
-    When se matricula por codigo "<alumno>" en el curso "<curso>"
-    Then el codigo de respuesta es <status>
-    And el codigo de error es "<codigo>"
-    Examples:
-      | motivo             | alumno     | curso  | status | codigo               |
-      | deuda              | i202610004 | PS5511 | 422    | ALUMNO_CON_DEUDA     |
-      | duplicada          | i202610003 | IA5513 | 409    | MATRICULA_DUPLICADA  |
-      | falta de vacantes  | i202610001 | IA5513 | 409    | SIN_VACANTES         |
-      | cruce de horario   | i202610002 | QA5517 | 409    | CRUCE_HORARIO        |
-      | límite de créditos | i202610005 | TS5514 | 422    | LIMITE_CREDITOS      |
-      | alumno inexistente | i999999999 | PS5511 | 404    | ALUMNO_NO_ENCONTRADO |
+  Escenario: Cotizar el curso
+    Cuando cotiza el curso "BD5410"
+    Entonces la API responde con código 200
+    Y la cotización muestra 4 créditos
+    Y la cotización muestra un subtotal de "480.0"
+    Y la cotización muestra un descuento de "10" por ciento
+    Y la cotización muestra un total de "432.0"
+
+  Escenario: Matricularse y pagar el curso
+    Cuando se matricula en el curso "BD5410"
+    Entonces la API responde con código 201
+    Y la matrícula queda en estado "REGISTRADA"
+    Y la matrícula tiene un monto de "432.0"
+    Y la respuesta cumple el esquema JSON "schemas/matricula.json"
+    Cuando paga la matrícula con el método "YAPE"
+    Entonces la API responde con código 200
+    Y la matrícula queda en estado "PAGADA"
+    Y el pago registra una fecha de pago
+    Y en los pagos existe esa matrícula con método "YAPE" y número de operación con formato OP-000000
+
+  Escenario: Regla de negocio que debe fallar
+    Cuando consulta la constancia del alumno "i202610003"
+    Entonces la API responde con código 403
+    Y la API responde con el código de error "ACCESO_DENEGADO"
+    Y la respuesta cumple el esquema JSON "schemas/error.json"

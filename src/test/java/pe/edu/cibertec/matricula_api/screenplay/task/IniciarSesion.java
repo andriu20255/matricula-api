@@ -34,6 +34,7 @@ public class IniciarSesion implements Performable {
             actor.remember("accessToken", access);
             actor.remember("refreshToken", refresh);
             actor.remember("refreshOriginal", refresh);
+            actor.remember("usuario", usuario);
         }
     }
 }
